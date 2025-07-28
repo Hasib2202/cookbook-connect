@@ -29,26 +29,28 @@ interface PaginatedRecentRecipesProps {
 
 export function PaginatedRecentRecipes({ 
   initialRecipes, 
-  recipesPerPage = 8 
+  recipesPerPage = 6 
 }: PaginatedRecentRecipesProps) {
   const [currentPage, setCurrentPage] = useState(1)
-  const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes)
+  const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes || [])
   const [loading, setLoading] = useState(false)
-  const [totalRecipes, setTotalRecipes] = useState(initialRecipes.length)
+  const [totalRecipes, setTotalRecipes] = useState(initialRecipes?.length || 0)
 
   const totalPages = Math.ceil(totalRecipes / recipesPerPage)
-  const startIndex = (currentPage - 1) * recipesPerPage
-  const endIndex = startIndex + recipesPerPage
-  const currentRecipes = recipes.slice(startIndex, endIndex)
+  
+  // For page 1, use sliced initial recipes. For other pages, use fetched recipes directly
+  const currentRecipes = currentPage === 1 
+    ? recipes.slice(0, recipesPerPage)
+    : recipes
 
   const fetchRecipes = async (page: number) => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/recipes?page=${page}&limit=${recipesPerPage}`)
+      const response = await fetch(`/api/recipes?page=${page}&limit=${recipesPerPage}&sort=recent`)
       if (response.ok) {
         const data = await response.json()
-        setRecipes(data.recipes)
-        setTotalRecipes(data.pagination.total)
+        setRecipes(data.recipes || [])
+        setTotalRecipes(data.pagination?.total || data.total || 0)
       }
     } catch (error) {
       console.error('Error fetching recipes:', error)
@@ -60,10 +62,8 @@ export function PaginatedRecentRecipes({
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       setCurrentPage(page)
-      // Only fetch from API if we don't have enough recipes loaded
-      if (page * recipesPerPage > recipes.length) {
-        fetchRecipes(page)
-      }
+      // Always fetch from API for the requested page
+      fetchRecipes(page)
       // Scroll to top of section
       document.getElementById('recent-recipes-section')?.scrollIntoView({ 
         behavior: 'smooth',
@@ -103,7 +103,7 @@ export function PaginatedRecentRecipes({
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: recipesPerPage }).map((_, i) => (
             <div key={i} className="overflow-hidden border rounded-xl animate-pulse">
               <div className="w-full h-40 bg-gray-200 rounded-b-none" />
@@ -126,7 +126,7 @@ export function PaginatedRecentRecipes({
   return (
     <div className="space-y-8">
       {/* Recipes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {currentRecipes.map((recipe) => (
           <RecipeCard key={recipe.id} recipe={recipe} />
         ))}
@@ -192,9 +192,11 @@ export function PaginatedRecentRecipes({
       )}
 
       {/* Results Info */}
-      <div className="text-center text-sm text-gray-600">
-        Showing {startIndex + 1}-{Math.min(endIndex, totalRecipes)} of {totalRecipes} recipes
-      </div>
+      {totalRecipes > 0 && (
+        <div className="text-sm text-center text-gray-600">
+          Showing {((currentPage - 1) * recipesPerPage) + 1}-{Math.min(currentPage * recipesPerPage, totalRecipes)} of {totalRecipes} recipes
+        </div>
+      )}
     </div>
   )
 }

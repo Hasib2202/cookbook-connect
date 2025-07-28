@@ -15,7 +15,6 @@ import Image from "next/image"
 
 async function getFeaturedRecipes() {
   return await prisma.recipe.findMany({
-    take: 5,
     include: {
       user: { select: { id: true, name: true, image: true } },
       ratings: { select: { rating: true } },
@@ -191,7 +190,7 @@ export default async function Home() {
                   createdAt: recipe.createdAt.toISOString(),
                   updatedAt: recipe.updatedAt.toISOString()
                 }))}
-                recipesPerPage={8}
+                recipesPerPage={6}
               />
             </Suspense>
           </div>

@@ -7,7 +7,7 @@ interface Recipe {
   images: string[]
   prepTime: number
   cookTime: number
-  difficulty: string
+  difficulty: "Easy" | "Medium" | "Hard"
   user: {
     id: string
     name: string | null
@@ -23,7 +23,7 @@ interface RecentRecipesProps {
 
 export function RecentRecipes({ recipes }: RecentRecipesProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {recipes.map((recipe) => (
         <RecipeCard key={recipe.id} recipe={recipe} />
       ))}
