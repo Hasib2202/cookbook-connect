@@ -1,38 +1,74 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useForm, useFieldArray } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, Minus, Upload } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { recipeSchema, type RecipeFormData } from "@/lib/validations/recipe"
-import toast from "react-hot-toast"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, Minus, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { recipeFormSchema, type RecipeFormData } from "@/lib/validations/recipe";
+import toast from "react-hot-toast";
 
 const categories = [
-  "Breakfast", "Lunch", "Dinner", "Dessert", "Snacks", 
-  "Beverages", "Vegan", "Vegetarian", "Italian", "Mexican", "Asian"
-]
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Dessert",
+  "Snacks",
+  "Beverages",
+  "Vegan",
+  "Vegetarian",
+  "Italian",
+  "Mexican",
+  "Asian",
+];
 
-const difficulties = ["Easy", "Medium", "Hard"]
+const difficulties = ["Easy", "Medium", "Hard"];
 
 interface RecipeFormProps {
-  initialData?: Partial<RecipeFormData>
-  recipeId?: string
+  initialData?: Partial<RecipeFormData>;
+  recipeId?: string;
+}
+
+// Helper function to safely parse JSON strings
+function safeJsonParse(jsonString: string | any[], fallback: any[] = []) {
+  if (Array.isArray(jsonString)) return jsonString;
+  if (typeof jsonString !== 'string') return fallback;
+  
+  try {
+    return JSON.parse(jsonString);
+  } catch {
+    return fallback;
+  }
 }
 
 export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [imageUrls, setImageUrls] = useState<string[]>(initialData?.images || [])
-  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>(
+    safeJsonParse(initialData?.images, [])
+  );
+  const router = useRouter();
 
   const form = useForm<RecipeFormData>({
-    resolver: zodResolver(recipeSchema),
+    resolver: zodResolver(recipeFormSchema),
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
@@ -41,66 +77,103 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
       servings: initialData?.servings || 4,
       difficulty: initialData?.difficulty || "Easy",
       category: initialData?.category || "",
-      ingredients: initialData?.ingredients || [{ name: "", amount: "", unit: "" }],
-      instructions: initialData?.instructions || [{ step: 1, instruction: "" }],
-      images: initialData?.images || []
+      // Parse JSON strings back to arrays for form handling
+      ingredients: safeJsonParse(initialData?.ingredients, [{ name: "", amount: "", unit: "" }]),
+      instructions: safeJsonParse(initialData?.instructions, [{ step: 1, instruction: "" }]),
+      images: safeJsonParse(initialData?.images, []),
+    },
+  });
+
+  const {
+    fields: ingredientFields,
+    append: appendIngredient,
+    remove: removeIngredient,
+  } = useFieldArray({
+    control: form.control,
+    name: "ingredients",
+  });
+
+  const {
+    fields: instructionFields,
+    append: appendInstruction,
+    remove: removeInstruction,
+  } = useFieldArray({
+    control: form.control,
+    name: "instructions",
+  });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsLoading(true);
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+
+        const { url } = await response.json();
+        return url;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const updatedUrls = [...imageUrls, ...uploadedUrls];
+
+      setImageUrls(updatedUrls);
+      form.setValue("images", updatedUrls);
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload images");
+    } finally {
+      setIsLoading(false);
     }
-  })
-
-  const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({
-    control: form.control,
-    name: "ingredients"
-  })
-
-  const { fields: instructionFields, append: appendInstruction, remove: removeInstruction } = useFieldArray({
-    control: form.control,
-    name: "instructions"
-  })
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files) return
-
-    // In a real app, upload to a file storage service like AWS S3, Cloudinary, etc.
-    // For this demo, we'll use placeholder URLs
-    const newImageUrls = Array.from(files).map((file, index) => 
-      `/placeholder-recipe-${Date.now()}-${index}.jpg`
-    )
-    
-    setImageUrls(prev => [...prev, ...newImageUrls])
-    form.setValue("images", [...imageUrls, ...newImageUrls])
-  }
+  };
 
   const removeImage = (index: number) => {
-    const newUrls = imageUrls.filter((_, i) => i !== index)
-    setImageUrls(newUrls)
-    form.setValue("images", newUrls)
-  }
+    const newUrls = imageUrls.filter((_, i) => i !== index);
+    setImageUrls(newUrls);
+    form.setValue("images", newUrls);
+  };
 
   async function onSubmit(data: RecipeFormData) {
-    setIsLoading(true)
-    
+    setIsLoading(true);
+
     try {
-      const url = recipeId ? `/api/recipes/${recipeId}` : "/api/recipes"
-      const method = recipeId ? "PUT" : "POST"
-      
+      const url = recipeId ? `/api/recipes/${recipeId}` : "/api/recipes";
+      const method = recipeId ? "PUT" : "POST";
+
+      // Send the data as-is - let the API schema handle the transformation
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      })
+        body: JSON.stringify(data),
+      });
 
-      if (response.ok) {
-        const recipe = await response.json()
-        toast.success(recipeId ? "Recipe updated!" : "Recipe created!")
-        router.push(`/recipes/${recipe.id}`)
-      } else {
-        toast.error("Failed to save recipe")
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save recipe");
       }
+
+      const recipe = await response.json();
+      toast.success(recipeId ? "Recipe updated!" : "Recipe created!");
+      router.push(`/recipes/${recipe.id}`);
     } catch (error) {
-      toast.error("Something went wrong")
+      console.error("Submission error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Something went wrong"
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -134,7 +207,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Describe your recipe..."
                       className="resize-none"
                       {...field}
@@ -145,7 +218,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
               )}
             />
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <FormField
                 control={form.control}
                 name="prepTime"
@@ -153,10 +226,12 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                   <FormItem>
                     <FormLabel>Prep Time (mins)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -171,10 +246,12 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                   <FormItem>
                     <FormLabel>Cook Time (mins)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -189,10 +266,12 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                   <FormItem>
                     <FormLabel>Servings</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -206,7 +285,10 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Difficulty</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select difficulty" />
@@ -232,15 +314,29 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-64">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+
+                    <SelectContent
+                      side="bottom"
+                      sideOffset={4}
+                      align="start"
+                      collisionPadding={0}
+                      className="w-64 overflow-hidden bg-white border border-gray-200 divide-y divide-gray-100 rounded-lg shadow-lg"
+                    >
                       {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
+                        <SelectItem
+                          key={category}
+                          value={category}
+                          className="px-4 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100"
+                        >
                           {category}
                         </SelectItem>
                       ))}
@@ -261,30 +357,47 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-center w-full">
-                <label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                <label
+                  htmlFor="image-upload"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Upload className="w-8 h-8 mb-4 text-gray-500" />
                     <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Click to upload</span> recipe images
+                      <span className="font-semibold">Click to upload</span>{" "}
+                      recipe images
                     </p>
                   </div>
-                  <input 
-                    id="image-upload" 
-                    type="file" 
-                    className="hidden" 
-                    multiple 
+                  <input
+                    id="image-upload"
+                    type="file"
+                    className="hidden"
+                    multiple
                     accept="image/*"
                     onChange={handleImageUpload}
                   />
                 </label>
               </div>
-              
+
               {imageUrls.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                   {imageUrls.map((url, index) => (
                     <div key={index} className="relative">
-                      <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                        <span className="text-sm text-gray-500">Image {index + 1}</span>
+                      <div className="relative overflow-hidden rounded-lg aspect-square">
+                        <img
+                          src={url}
+                          alt={`Recipe image ${index + 1}`}
+                          className="object-cover w-full h-full"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `<div class="flex items-center justify-center bg-gray-200 w-full h-full"><span class="text-sm text-gray-500">Image ${index + 1}</span></div>`;
+                            }
+                          }}
+                        />
                       </div>
                       <Button
                         type="button"
@@ -293,7 +406,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                         className="absolute -top-2 -right-2"
                         onClick={() => removeImage(index)}
                       >
-                        <Minus className="h-4 w-4" />
+                        <Minus className="w-4 h-4" />
                       </Button>
                     </div>
                   ))}
@@ -324,7 +437,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name={`ingredients.${index}.unit`}
@@ -337,7 +450,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name={`ingredients.${index}.name`}
@@ -350,7 +463,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                       </FormItem>
                     )}
                   />
-                  
+
                   {ingredientFields.length > 1 && (
                     <Button
                       type="button"
@@ -358,18 +471,20 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                       size="sm"
                       onClick={() => removeIngredient(index)}
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="w-4 h-4" />
                     </Button>
                   )}
                 </div>
               ))}
-              
+
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => appendIngredient({ name: "", amount: "", unit: "" })}
+                onClick={() =>
+                  appendIngredient({ name: "", amount: "", unit: "" })
+                }
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="w-4 h-4 mr-2" />
                 Add Ingredient
               </Button>
             </div>
@@ -385,17 +500,17 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
             <div className="space-y-4">
               {instructionFields.map((field, index) => (
                 <div key={field.id} className="flex space-x-2">
-                  <div className="flex-shrink-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-sm font-medium text-white bg-orange-500 rounded-full">
                     {index + 1}
                   </div>
-                  
+
                   <FormField
                     control={form.control}
                     name={`instructions.${index}.instruction`}
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormControl>
-                          <Textarea 
+                          <Textarea
                             placeholder={`Step ${index + 1} instructions...`}
                             className="resize-none"
                             {...field}
@@ -405,7 +520,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                       </FormItem>
                     )}
                   />
-                  
+
                   {instructionFields.length > 1 && (
                     <Button
                       type="button"
@@ -413,21 +528,23 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                       size="sm"
                       onClick={() => removeInstruction(index)}
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="w-4 h-4" />
                     </Button>
                   )}
                 </div>
               ))}
-              
+
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => appendInstruction({ 
-                  step: instructionFields.length + 1, 
-                  instruction: "" 
-                })}
+                onClick={() =>
+                  appendInstruction({
+                    step: instructionFields.length + 1,
+                    instruction: "",
+                  })
+                }
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="w-4 h-4 mr-2" />
                 Add Step
               </Button>
             </div>
@@ -439,11 +556,19 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
           <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Saving..." : (recipeId ? "Update Recipe" : "Create Recipe")}
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="text-white bg-orange-500 hover:bg-orange-600"
+          >
+            {isLoading
+              ? "Saving..."
+              : recipeId
+              ? "Update Recipe"
+              : "Create Recipe"}
           </Button>
         </div>
       </form>
     </Form>
-  )
+  );
 }

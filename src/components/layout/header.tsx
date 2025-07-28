@@ -7,24 +7,32 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChefHat, Plus, User, Settings, LogOut, Heart, BookOpen } from "lucide-react"
+import {
+  ChefHat,
+  Plus,
+  Settings,
+  LogOut,
+  Heart,
+  BookOpen,
+} from "lucide-react"
 
 export function Header() {
   const { data: session } = useSession()
 
   return (
     <header className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="container flex items-center justify-between h-16 px-4 mx-auto">
+        {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <ChefHat className="h-8 w-8 text-orange-500" />
+          <ChefHat className="w-8 h-8 text-orange-500" />
           <span className="text-xl font-bold">CookBook Connect</span>
         </Link>
 
-        <nav className="hidden md:flex items-center space-x-6">
+        {/* Nav links */}
+        <nav className="items-center hidden space-x-6 md:flex">
           <Link href="/recipes" className="text-sm font-medium hover:text-orange-500">
             Recipes
           </Link>
@@ -33,67 +41,90 @@ export function Header() {
           </Link>
         </nav>
 
+        {/* Right side */}
         <div className="flex items-center space-x-4">
           {session ? (
             <>
+              {/* Create Recipe button */}
               <Button asChild size="sm">
-                <Link href="/recipes/create">
-                  <Plus className="h-4 w-4 mr-2" />
+                <Link href="/recipes/create" className="flex items-center">
+                  <Plus className="w-4 h-4 mr-2" />
                   Create Recipe
                 </Link>
               </Button>
-              
+
+              {/* Profile dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
+                  <Button variant="ghost" className="flex items-center px-2 space-x-2">
+                    <Avatar className="w-8 h-8">
                       <AvatarImage src={session.user?.image || ""} alt={session.user?.name || ""} />
-                      <AvatarFallback>
+                      <AvatarFallback className="font-semibold text-white bg-orange-500 rounded-full">
                         {session.user?.name?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
+                    {/* <span className="hidden text-sm font-medium sm:inline">
+                      {session.user?.name}
+                    </span> */}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      {session.user?.name && (
-                        <p className="font-medium">{session.user.name}</p>
-                      )}
-                      {session.user?.email && (
-                        <p className="w-[200px] truncate text-sm text-muted-foreground">
-                          {session.user.email}
-                        </p>
-                      )}
-                    </div>
+
+                <DropdownMenuContent
+                  align="end"
+                  forceMount
+                  className="w-64 overflow-hidden bg-white border border-gray-200 divide-y divide-gray-100 rounded-lg shadow-lg "
+                >
+                  {/* Header */}
+                  <div className="px-4 py-3">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {session.user?.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500 truncate">
+                      {session.user?.email}
+                    </p>
                   </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/my-recipes">
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      My Recipes
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/favorites">
-                      <Heart className="mr-2 h-4 w-4" />
-                      Favorites
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onSelect={() => signOut()}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
+
+                  {/* Menu items */}
+                  <div className="py-1">
+                    <DropdownMenuItem
+                      asChild
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <Link href="/my-recipes">
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        My Recipes
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      asChild
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <Link href="/favorites">
+                        <Heart className="w-4 h-4 mr-2" />
+                        Favorites
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      asChild
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <Link href="/profile">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                  </div>
+
+                  {/* Logout */}
+                  <div className="py-1">
+                    <DropdownMenuItem
+                      className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      onSelect={() => signOut()}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Log out
+                    </DropdownMenuItem>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>

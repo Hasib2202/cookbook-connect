@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
@@ -24,14 +23,14 @@ interface Recipe {
   id: string
   title: string
   description: string
-  images: string[]
+  images: string | string[]
   prepTime: number
   cookTime: number
   servings: number
   difficulty: string
   category: string
-  ingredients: any
-  instructions: any
+  ingredients: string | any[]
+  instructions: string | any[]
   createdAt: string
   user: {
     id: string
@@ -61,10 +60,27 @@ interface RecipeDetailProps {
   currentUserId?: string
 }
 
+// Helper function to safely parse JSON strings
+function safeJsonParse(jsonString: string | any[], fallback: any[] = []) {
+  if (Array.isArray(jsonString)) return jsonString;
+  if (typeof jsonString !== 'string') return fallback;
+  
+  try {
+    return JSON.parse(jsonString);
+  } catch {
+    return fallback;
+  }
+}
+
 export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: RecipeDetailProps) {
   const [favorited, setFavorited] = useState(isFavorited)
   const [favoritesCount, setFavoritesCount] = useState(recipe._count.favorites)
   const [checkedIngredients, setCheckedIngredients] = useState<Record<number, boolean>>({})
+  
+  // Parse the JSON strings safely
+  const images = safeJsonParse(recipe.images, [])
+  const ingredients = safeJsonParse(recipe.ingredients, [])
+  const instructions = safeJsonParse(recipe.instructions, [])
   
   const averageRating = calculateAverageRating(recipe.ratings)
   const totalTime = recipe.prepTime + recipe.cookTime
@@ -102,10 +118,10 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-4xl font-bold mb-2">{recipe.title}</h1>
-            <p className="text-gray-600 text-lg">{recipe.description}</p>
+            <h1 className="mb-2 text-4xl font-bold">{recipe.title}</h1>
+            <p className="text-lg text-gray-600">{recipe.description}</p>
           </div>
           
           <div className="flex items-center space-x-2">
@@ -122,12 +138,12 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
               <>
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/recipes/edit/${recipe.id}`}>
-                    <Edit className="h-4 w-4 mr-2" />
+                    <Edit className="w-4 h-4 mr-2" />
                     Edit
                   </Link>
                 </Button>
                 <Button variant="destructive" size="sm">
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="w-4 h-4 mr-2" />
                   Delete
                 </Button>
               </>
@@ -138,29 +154,29 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
         {/* Recipe Meta */}
         <div className="flex items-center space-x-6 text-sm text-gray-600">
           <div className="flex items-center">
-            <Clock className="h-4 w-4 mr-1" />
+            <Clock className="w-4 h-4 mr-1" />
             {formatTime(totalTime)}
           </div>
           <div className="flex items-center">
-            <Users className="h-4 w-4 mr-1" />
+            <Users className="w-4 h-4 mr-1" />
             {recipe.servings} servings
           </div>
           <div className="flex items-center">
-            <ChefHat className="h-4 w-4 mr-1" />
+            <ChefHat className="w-4 h-4 mr-1" />
             {recipe.difficulty}
           </div>
           {averageRating > 0 && (
             <div className="flex items-center">
-              <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
+              <Star className="w-4 h-4 mr-1 text-yellow-400 fill-yellow-400" />
               {averageRating} ({recipe.ratings.length} reviews)
             </div>
           )}
         </div>
 
-        <div className="flex items-center space-x-4 mt-4">
+        <div className="flex items-center mt-4 space-x-4">
           <Badge>{recipe.category}</Badge>
           <div className="flex items-center space-x-2">
-            <Avatar className="h-8 w-8">
+            <Avatar className="w-8 h-8">
               <AvatarImage src={recipe.user.image || ""} />
               <AvatarFallback>
                 {recipe.user.name?.charAt(0).toUpperCase()}
@@ -171,30 +187,35 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Images */}
         <div className="lg:col-span-2">
           <Card className="overflow-hidden">
             <CardContent className="p-0">
-              <Swiper
-                modules={[Navigation, Pagination]}
-                navigation
-                pagination={{ clickable: true }}
-                className="recipe-images-swiper"
-              >
-                {recipe.images.map((image, index) => (
-                  <SwiperSlide key={index}>
-                    <div className="relative aspect-video">
-                      <Image
-                        src={image}
-                        alt={`${recipe.title} - Image ${index + 1}`}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+              {images.length > 0 ? (
+                <Swiper
+                  modules={[Navigation, Pagination]}
+                  navigation
+                  pagination={{ clickable: true }}
+                  className="recipe-images-swiper"
+                >
+                  {images.map((image: string, index: number) => (
+                    <SwiperSlide key={index}>
+                      <div className="relative aspect-video">
+                        <img
+                          src={image}
+                          alt={`${recipe.title} - Image ${index + 1}`}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              ) : (
+                <div className="flex items-center justify-center bg-gray-200 aspect-video">
+                  <span className="text-gray-500">No images available</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -209,34 +230,42 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
                 
                 <TabsContent value="ingredients" className="mt-4">
                   <div className="space-y-2">
-                    {recipe.ingredients.map((ingredient: any, index: number) => (
-                      <div key={index} className="flex items-center space-x-3">
-                        <Checkbox
-                          id={`ingredient-${index}`}
-                          checked={checkedIngredients[index] || false}
-                          onCheckedChange={() => handleIngredientCheck(index)}
-                        />
-                        <label
-                          htmlFor={`ingredient-${index}`}
-                          className={`text-sm ${checkedIngredients[index] ? 'line-through text-gray-500' : ''}`}
-                        >
-                          {ingredient.amount} {ingredient.unit} {ingredient.name}
-                        </label>
-                      </div>
-                    ))}
+                    {ingredients.length > 0 ? (
+                      ingredients.map((ingredient: any, index: number) => (
+                        <div key={index} className="flex items-center space-x-3">
+                          <Checkbox
+                            id={`ingredient-${index}`}
+                            checked={checkedIngredients[index] || false}
+                            onCheckedChange={() => handleIngredientCheck(index)}
+                          />
+                          <label
+                            htmlFor={`ingredient-${index}`}
+                            className={`text-sm ${checkedIngredients[index] ? 'line-through text-gray-500' : ''}`}
+                          >
+                            {ingredient.amount} {ingredient.unit} {ingredient.name}
+                          </label>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500">No ingredients available</p>
+                    )}
                   </div>
                 </TabsContent>
                 
                 <TabsContent value="instructions" className="mt-4">
                   <div className="space-y-4">
-                    {recipe.instructions.map((instruction: any) => (
-                      <div key={instruction.step} className="flex space-x-4">
-                        <div className="flex-shrink-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                          {instruction.step}
+                    {instructions.length > 0 ? (
+                      instructions.map((instruction: any) => (
+                        <div key={instruction.step} className="flex space-x-4">
+                          <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-sm font-medium text-white bg-orange-500 rounded-full">
+                            {instruction.step}
+                          </div>
+                          <p className="pt-1 text-sm">{instruction.instruction}</p>
                         </div>
-                        <p className="text-sm pt-1">{instruction.instruction}</p>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-gray-500">No instructions available</p>
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>
@@ -307,7 +336,7 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
                   <div key={rating.id} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Avatar className="h-6 w-6">
+                        <Avatar className="w-6 h-6">
                           <AvatarImage src={rating.user.image || ""} />
                           <AvatarFallback className="text-xs">
                             {rating.user.name?.charAt(0).toUpperCase()}
