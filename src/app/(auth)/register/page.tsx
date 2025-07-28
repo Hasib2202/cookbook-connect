@@ -45,10 +45,10 @@ export default function RegisterPage() {
         toast.success("Account created successfully!")
         router.push("/login")
       } else {
-        const error = await response.json()
-        toast.error(error.error || "Something went wrong")
+        const errorData = await response.json()
+        toast.error(errorData.error || "Something went wrong")
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong")
     } finally {
       setIsLoading(false)
@@ -127,7 +127,7 @@ export default function RegisterPage() {
                 )}
               />
               
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full text-white bg-black" disabled={isLoading}>
                 {isLoading ? "Creating account..." : "Create account"}
               </Button>
             </form>
@@ -135,7 +135,7 @@ export default function RegisterPage() {
           
           <div className="mt-6 text-sm text-center">
             <span className="text-gray-600">Already have an account? </span>
-            <Link href="/login" className="text-orange-500 hover:underline">
+            <Link href="/login" className="text-orange-500 hover:underline ">
               Sign in
             </Link>
           </div>

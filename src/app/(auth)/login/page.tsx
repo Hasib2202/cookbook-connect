@@ -71,11 +71,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div className="flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <ChefHat className="h-12 w-12 text-orange-500" />
+            <ChefHat className="w-12 h-12 text-orange-500" />
           </div>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>
@@ -114,13 +114,13 @@ export default function LoginPage() {
                 )}
               />
               
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full text-white bg-black" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </form>
           </Form>
           
-          <div className="mt-6 text-center text-sm">
+          <div className="mt-6 text-sm text-center">
             <span className="text-gray-600">Don&apos;t have an account? </span>
             <Link href="/register" className="text-orange-500 hover:underline">
               Sign up

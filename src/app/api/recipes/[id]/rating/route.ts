@@ -9,11 +9,11 @@ const ratingSchema = z.object({
   comment: z.string().optional()
 })
 
-interface Params {
-  params: { id: string }
+interface RouteParams {
+  params: Promise<{ id: string }>
 }
 
-export async function POST(request: NextRequest, { params }: Params) {
+export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
