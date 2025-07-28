@@ -56,11 +56,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div className="flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <ChefHat className="h-12 w-12 text-orange-500" />
+            <ChefHat className="w-12 h-12 text-orange-500" />
           </div>
           <CardTitle className="text-2xl">Create an account</CardTitle>
           <CardDescription>
@@ -133,7 +133,7 @@ export default function RegisterPage() {
             </form>
           </Form>
           
-          <div className="mt-6 text-center text-sm">
+          <div className="mt-6 text-sm text-center">
             <span className="text-gray-600">Already have an account? </span>
             <Link href="/login" className="text-orange-500 hover:underline">
               Sign in

@@ -141,7 +141,7 @@ export default async function Home() {
           <div className="container px-4 mx-auto">
             <div className="mb-12 text-center">
               <h2 className="mb-4 text-3xl font-bold">Browse by Category</h2>
-              <p className="max-w-2xl mx-auto text-gray-600 mb-6">
+              <p className="max-w-2xl mx-auto mb-6 text-gray-600">
                 Find recipes organized by dietary preferences, meal types, and
                 cooking styles
               </p>
@@ -153,13 +153,13 @@ export default async function Home() {
               </Link>
             </div>
             <Suspense fallback={
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg border p-4 text-center animate-pulse">
-                    <div className="h-8 w-8 bg-gray-200 rounded mx-auto mb-2" />
-                    <div className="h-4 w-16 bg-gray-200 rounded mx-auto mb-1" />
-                    <div className="h-3 w-20 bg-gray-200 rounded mx-auto mb-2" />
-                    <div className="h-5 w-12 bg-gray-200 rounded mx-auto" />
+                  <div key={i} className="p-4 text-center bg-white border rounded-lg animate-pulse">
+                    <div className="w-8 h-8 mx-auto mb-2 bg-gray-200 rounded" />
+                    <div className="w-16 h-4 mx-auto mb-1 bg-gray-200 rounded" />
+                    <div className="w-20 h-3 mx-auto mb-2 bg-gray-200 rounded" />
+                    <div className="w-12 h-5 mx-auto bg-gray-200 rounded" />
                   </div>
                 ))}
               </div>
