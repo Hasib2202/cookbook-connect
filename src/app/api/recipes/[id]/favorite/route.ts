@@ -9,6 +9,7 @@ interface Params {
 
 export async function POST(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       where: {
         userId_recipeId: {
           userId: session.user.id,
-          recipeId: params.id
+          recipeId: id
         }
       }
     })
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     await prisma.favorite.create({
       data: {
         userId: session.user.id,
-        recipeId: params.id
+        recipeId: id
       }
     })
 

@@ -9,8 +9,9 @@ interface Params {
 
 export async function GET(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params
     const recipe = await prisma.recipe.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         user: {
           select: { id: true, name: true, image: true }
@@ -44,13 +45,14 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const recipe = await prisma.recipe.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!recipe || recipe.userId !== session.user.id) {
@@ -60,7 +62,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const body = await request.json()
     
     const updatedRecipe = await prisma.recipe.update({
-      where: { id: params.id },
+      where: { id },
       data: body,
       include: {
         user: {
@@ -80,13 +82,14 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const recipe = await prisma.recipe.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!recipe || recipe.userId !== session.user.id) {
@@ -94,7 +97,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     }
 
     await prisma.recipe.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: "Recipe deleted successfully" })

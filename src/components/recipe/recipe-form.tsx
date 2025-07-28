@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Minus, Upload } from "lucide-react";
+import { Plus, Minus, Upload, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,7 +50,7 @@ interface RecipeFormProps {
 }
 
 // Helper function to safely parse JSON strings
-function safeJsonParse(jsonString: string | any[], fallback: any[] = []) {
+function safeJsonParse<T>(jsonString: string | T[] | undefined, fallback: T[] = []): T[] {
   if (Array.isArray(jsonString)) return jsonString;
   if (typeof jsonString !== 'string') return fallback;
   
@@ -62,6 +63,7 @@ function safeJsonParse(jsonString: string | any[], fallback: any[] = []) {
 
 export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>(
     safeJsonParse(initialData?.images, [])
   );
@@ -106,36 +108,78 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    setIsLoading(true);
+    setIsImageUploading(true);
 
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error("Upload failed");
+      const uploadedUrls: string[] = [];
+      
+      // Upload images sequentially instead of in parallel to avoid overwhelming the server
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Check file size (limit to 10MB per image to match server limit)
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        if (file.size > maxSize) {
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          toast.error(`Image "${file.name}" is ${fileSizeMB}MB. Please use images under 10MB.`);
+          continue;
         }
 
-        const { url } = await response.json();
-        return url;
-      });
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+          toast.error(`"${file.name}" is not a valid image file.`);
+          continue;
+        }
 
-      const uploadedUrls = await Promise.all(uploadPromises);
-      const updatedUrls = [...imageUrls, ...uploadedUrls];
+        try {
+          const formData = new FormData();
+          formData.append("file", file);
 
-      setImageUrls(updatedUrls);
-      form.setValue("images", updatedUrls);
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: "Upload failed" }));
+            throw new Error(errorData.error || `Failed to upload ${file.name}`);
+          }
+
+          const { url } = await response.json();
+          uploadedUrls.push(url);
+          
+          // Show progress feedback
+          toast.success(`Uploaded ${file.name} (${i + 1}/${files.length})`);
+        } catch (error) {
+          console.error(`Upload error for ${file.name}:`, error);
+          toast.error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          // Continue with other files instead of stopping completely
+        }
+      }
+
+      // Update the form with successfully uploaded images
+      if (uploadedUrls.length > 0) {
+        const updatedUrls = [...imageUrls, ...uploadedUrls];
+        setImageUrls(updatedUrls);
+        form.setValue("images", updatedUrls);
+        
+        if (uploadedUrls.length === files.length) {
+          toast.success(`Successfully uploaded all ${files.length} images!`);
+        } else {
+          toast.success(`Successfully uploaded ${uploadedUrls.length} out of ${files.length} images.`);
+        }
+      } else {
+        toast.error("Failed to upload any images. Please try again.");
+      }
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Failed to upload images");
+      toast.error("Failed to upload images. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsImageUploading(false);
+      // Reset the file input to allow re-uploading the same files if needed
+      if (e.target) {
+        e.target.value = '';
+      }
     }
   };
 
@@ -229,9 +273,11 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                       <Input
                         type="number"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
+                        value={field.value || ""}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                          field.onChange(isNaN(value) ? 0 : value);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -249,9 +295,11 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                       <Input
                         type="number"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
+                        value={field.value || ""}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                          field.onChange(isNaN(value) ? 0 : value);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -269,9 +317,11 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                       <Input
                         type="number"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
+                        value={field.value || ""}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 1 : parseInt(e.target.value);
+                          field.onChange(isNaN(value) ? 1 : value);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -359,14 +409,28 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
               <div className="flex items-center justify-center w-full">
                 <label
                   htmlFor="image-upload"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                  className={`flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 ${
+                    isImageUploading ? 'pointer-events-none opacity-75' : ''
+                  }`}
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="w-8 h-8 mb-4 text-gray-500" />
-                    <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Click to upload</span>{" "}
-                      recipe images
-                    </p>
+                    {isImageUploading ? (
+                      <>
+                        <Loader2 className="w-8 h-8 mb-4 text-orange-500 animate-spin" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Uploading images...</span>
+                        </p>
+                        <p className="text-xs text-gray-400">Please wait while we upload your images</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Click to upload</span>{" "}
+                          recipe images
+                        </p>
+                      </>
+                    )}
                   </div>
                   <input
                     id="image-upload"
@@ -375,6 +439,7 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                     multiple
                     accept="image/*"
                     onChange={handleImageUpload}
+                    disabled={isImageUploading}
                   />
                 </label>
               </div>
@@ -382,23 +447,22 @@ export function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
               {imageUrls.length > 0 && (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                   {imageUrls.map((url, index) => (
-                    <div key={index} className="relative">
-                      <div className="relative overflow-hidden rounded-lg aspect-square">
-                        <img
-                          src={url}
-                          alt={`Recipe image ${index + 1}`}
-                          className="object-cover w-full h-full"
-                          onError={(e) => {
-                            // Fallback if image fails to load
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = `<div class="flex items-center justify-center bg-gray-200 w-full h-full"><span class="text-sm text-gray-500">Image ${index + 1}</span></div>`;
-                            }
-                          }}
-                        />
-                      </div>
+                    <div key={index} className="relative overflow-hidden rounded-lg aspect-square">
+                      <Image
+                        src={url}
+                        alt={`Recipe image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          // Fallback if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `<div class="flex items-center justify-center bg-gray-200 w-full h-full"><span class="text-sm text-gray-500">Image ${index + 1}</span></div>`;
+                          }
+                        }}
+                      />
                       <Button
                         type="button"
                         variant="destructive"

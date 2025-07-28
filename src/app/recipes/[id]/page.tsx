@@ -43,21 +43,33 @@ async function getUserFavorite(recipeId: string, userId?: string) {
 }
 
 export default async function RecipePage({ params }: { params: { id: string } }) {
+  const { id } = await params
   const session = await getServerSession(authOptions)
-  const recipe = await getRecipe(params.id)
+  const recipe = await getRecipe(id)
   
   if (!recipe) {
     notFound()
   }
 
-  const userFavorite = await getUserFavorite(params.id, session?.user?.id)
+  const userFavorite = await getUserFavorite(id, session?.user?.id)
+
+  // Serialize dates for client component
+  const serializedRecipe = {
+    ...recipe,
+    createdAt: recipe.createdAt.toISOString(),
+    updatedAt: recipe.updatedAt.toISOString(),
+    ratings: recipe.ratings.map(rating => ({
+      ...rating,
+      createdAt: rating.createdAt.toISOString()
+    }))
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container px-4 py-8 mx-auto">
         <RecipeDetail 
-          recipe={recipe} 
+          recipe={serializedRecipe} 
           isOwner={recipe.userId === session?.user?.id}
           isFavorited={!!userFavorite}
           currentUserId={session?.user?.id}
