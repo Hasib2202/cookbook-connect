@@ -11,6 +11,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const folder = formData.get("folder") as string || "recipes"; // Default to recipes folder
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -22,7 +23,16 @@ export async function POST(request: Request) {
 
     const result = await cloudinary.uploader.upload(
       `data:${file.type};base64,${base64String}`,
-      { folder: "recipes" }
+      { 
+        folder: folder,
+        // For profile images, we might want to apply transformations
+        ...(folder === "profiles" && {
+          transformation: [
+            { width: 400, height: 400, crop: "fill", gravity: "face" },
+            { quality: "auto", fetch_format: "auto" }
+          ]
+        })
+      }
     );
 
     return NextResponse.json({ url: result.secure_url });

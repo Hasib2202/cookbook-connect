@@ -1,11 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,21 +19,15 @@ import {
   Heart,
   BookOpen,
   Search,
-  X,
 } from "lucide-react"
 
 export function Header() {
   const { data: session } = useSession()
   const router = useRouter()
-  const [searchQuery, setSearchQuery] = useState("")
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/recipes?search=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery("")
-    }
-  }
+  // Debug session data
+  console.log("Header session data:", session)
+  console.log("User image URL:", session?.user?.image)
 
   return (
     <header className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -47,29 +39,29 @@ export function Header() {
         </Link>
 
         {/* Search Bar - Hidden on mobile */}
-          {/* <div className="flex-1 hidden max-w-md mx-8 md:block">
-            <form onSubmit={handleSearch}>
-              <div className="relative">
-                <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
-                <Input
-                  type="text"
-                  placeholder="Search recipes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 focus:border-orange-500 focus:ring-orange-500"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </form>
-          </div> */}
+        {/* <div className="flex-1 hidden max-w-md mx-8 md:block">
+          <form onSubmit={handleSearch}>
+            <div className="relative">
+              <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
+              <Input
+                type="text"
+                placeholder="Search recipes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 focus:border-orange-500 focus:ring-orange-500"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </form>
+        </div> */}
 
         {/* Nav links */}
         <nav className="items-center hidden space-x-6 lg:flex">
@@ -108,14 +100,20 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center px-2 space-x-2">
                     <Avatar className="w-8 h-8">
-                      <AvatarImage src={session.user?.image || ""} alt={session.user?.name || ""} />
-                      <AvatarFallback className="font-semibold text-white bg-orange-500 rounded-full">
-                        {session.user?.name?.charAt(0).toUpperCase()}
+                      <AvatarImage 
+                        src={session.user?.image || ""} 
+                        alt={session.user?.name || "User"} 
+                        className="object-cover"
+                        onLoad={() => console.log("Avatar image loaded:", session.user?.image)}
+                        onError={() => console.log("Avatar image failed to load:", session.user?.image)}
+                      />
+                      <AvatarFallback className="font-semibold text-white bg-orange-500">
+                        {session.user?.name?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    {/* <span className="hidden text-sm font-medium sm:inline">
+                    <span className="hidden text-sm font-medium sm:inline">
                       {session.user?.name}
-                    </span> */}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
 
