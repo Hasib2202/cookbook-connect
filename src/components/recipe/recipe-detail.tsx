@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css'
@@ -14,10 +15,12 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { formatTime, calculateAverageRating } from "@/lib/utils"
 import { RatingForm } from "./rating-form"
 import toast from "react-hot-toast"
+import { useRouter } from "next/navigation"
 
 interface Recipe {
   id: string
@@ -29,8 +32,8 @@ interface Recipe {
   servings: number
   difficulty: string
   category: string
-  ingredients: string | any[]
-  instructions: string | any[]
+  ingredients: string | Array<{name: string, amount: string, unit: string}>
+  instructions: string | Array<{step: number, instruction: string}>
   createdAt: string
   user: {
     id: string
@@ -61,7 +64,7 @@ interface RecipeDetailProps {
 }
 
 // Helper function to safely parse JSON strings
-function safeJsonParse(jsonString: string | any[], fallback: any[] = []) {
+function safeJsonParse<T>(jsonString: string | T[], fallback: T[] = []): T[] {
   if (Array.isArray(jsonString)) return jsonString;
   if (typeof jsonString !== 'string') return fallback;
   
@@ -76,6 +79,9 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
   const [favorited, setFavorited] = useState(isFavorited)
   const [favoritesCount, setFavoritesCount] = useState(recipe._count.favorites)
   const [checkedIngredients, setCheckedIngredients] = useState<Record<number, boolean>>({})
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const router = useRouter()
   
   // Parse the JSON strings safely
   const images = safeJsonParse(recipe.images, [])
@@ -102,8 +108,32 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
         setFavoritesCount(prev => data.favorited ? prev + 1 : prev - 1)
         toast.success(data.favorited ? "Added to favorites" : "Removed from favorites")
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong")
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!isOwner) return
+    
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/recipes/${recipe.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        toast.success("Recipe deleted successfully")
+        router.push("/recipes")
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || "Failed to delete recipe")
+      }
+    } catch {
+      toast.error("Something went wrong")
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteDialog(false)
     }
   }
 
@@ -142,10 +172,44 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
                     Edit
                   </Link>
                 </Button>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
+                
+                <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="text-white bg-red-600 border-red-600 hover:bg-red-700 hover:border-red-700"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-white">
+                    <DialogHeader>
+                      <DialogTitle>Delete Recipe</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to delete &quot;{recipe.title}&quot;? This action cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowDeleteDialog(false)}
+                        disabled={isDeleting}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="text-white bg-red-600 hover:bg-red-700"
+                      >
+                        {isDeleting ? "Deleting..." : "Delete Recipe"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </>
             )}
           </div>
@@ -174,7 +238,7 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
         </div>
 
         <div className="flex items-center mt-4 space-x-4">
-          <Badge>{recipe.category}</Badge>
+          <Badge className="text-gray-900 bg-white border border-gray-200 hover:bg-gray-50">{recipe.category}</Badge>
           <div className="flex items-center space-x-2">
             <Avatar className="w-8 h-8">
               <AvatarImage src={recipe.user.image || ""} />
@@ -202,10 +266,12 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
                   {images.map((image: string, index: number) => (
                     <SwiperSlide key={index}>
                       <div className="relative aspect-video">
-                        <img
+                        <Image
                           src={image}
                           alt={`${recipe.title} - Image ${index + 1}`}
-                          className="object-cover w-full h-full"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw"
                         />
                       </div>
                     </SwiperSlide>
@@ -231,7 +297,7 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
                 <TabsContent value="ingredients" className="mt-4">
                   <div className="space-y-2">
                     {ingredients.length > 0 ? (
-                      ingredients.map((ingredient: any, index: number) => (
+                      ingredients.map((ingredient: {name: string, amount: string, unit: string}, index: number) => (
                         <div key={index} className="flex items-center space-x-3">
                           <Checkbox
                             id={`ingredient-${index}`}
@@ -255,7 +321,7 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
                 <TabsContent value="instructions" className="mt-4">
                   <div className="space-y-4">
                     {instructions.length > 0 ? (
-                      instructions.map((instruction: any) => (
+                      instructions.map((instruction: {step: number, instruction: string}) => (
                         <div key={instruction.step} className="flex space-x-4">
                           <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-sm font-medium text-white bg-orange-500 rounded-full">
                             {instruction.step}
@@ -300,10 +366,15 @@ export function RecipeDetail({ recipe, isOwner, isFavorited, currentUserId }: Re
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Difficulty</span>
-                <Badge variant={
-                  recipe.difficulty === 'Easy' ? 'default' :
-                  recipe.difficulty === 'Medium' ? 'secondary' : 'destructive'
-                }>
+                <Badge 
+                  className={
+                    recipe.difficulty === 'Easy' 
+                      ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' :
+                    recipe.difficulty === 'Medium' 
+                      ? 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200' : 
+                      'bg-red-100 text-red-800 border-red-200 hover:bg-red-200'
+                  }
+                >
                   {recipe.difficulty}
                 </Badge>
               </div>

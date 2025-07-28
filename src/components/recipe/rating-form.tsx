@@ -56,7 +56,7 @@ export function RatingForm({ recipeId, existingRating }: RatingFormProps) {
       } else {
         toast.error("Failed to submit rating")
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong")
     } finally {
       setIsLoading(false)

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     })
 
     return NextResponse.json(newRating, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to submit rating" },
       { status: 500 }

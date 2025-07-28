@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     })
 
     return NextResponse.json({ favorited: true })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to toggle favorite" },
       { status: 500 }
