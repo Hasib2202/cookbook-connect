@@ -10,8 +10,18 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get("category")
     const search = searchParams.get("search")
     const difficulty = searchParams.get("difficulty")
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "12")
     
-    const where: any = {}
+    const where: {
+      category?: string
+      difficulty?: string
+      OR?: Array<{
+        title?: { contains: string; mode: 'insensitive' }
+        description?: { contains: string; mode: 'insensitive' }
+      }>
+    } = {}
+    
     if (category) where.category = category
     if (difficulty) where.difficulty = difficulty
     if (search) {
@@ -20,6 +30,15 @@ export async function GET(request: NextRequest) {
         { description: { contains: search, mode: 'insensitive' } }
       ]
     }
+    
+    // Calculate skip for pagination
+    const skip = (page - 1) * limit
+    
+    // Sort by most recent
+    const orderBy = { createdAt: 'desc' as const }
+    
+    // Get total count for pagination
+    const total = await prisma.recipe.count({ where })
     
     const recipes = await prisma.recipe.findMany({
       where,
@@ -34,11 +53,33 @@ export async function GET(request: NextRequest) {
           select: { favorites: true }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy,
+      skip,
+      take: limit
     })
     
-    return NextResponse.json(recipes)
+    // Transform the recipes to match expected format
+    const transformedRecipes = recipes.map(recipe => ({
+      ...recipe,
+      images: JSON.parse(recipe.images || '[]'),
+      ingredients: JSON.parse(recipe.ingredients || '[]'),
+      instructions: JSON.parse(recipe.instructions || '[]'),
+      difficulty: recipe.difficulty as "Easy" | "Medium" | "Hard"
+    }))
+    
+    return NextResponse.json({
+      recipes: transformedRecipes,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1
+      }
+    })
   } catch (error) {
+    console.error("Error fetching recipes:", error)
     return NextResponse.json(
       { error: "Failed to fetch recipes" },
       { status: 500 }
