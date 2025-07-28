@@ -252,6 +252,6 @@ If you have any questions or need help with setup, please:
 
 ---
 
-**Built with ❤️ by Hasib Rahman**
+**Built with ❤️ by Hasib Mostofa**
 
 *Happy Cooking! 🍳*
