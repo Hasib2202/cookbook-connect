@@ -13,21 +13,34 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "12")
     
+    // Build where clause
     const where: {
       category?: string
       difficulty?: string
       OR?: Array<{
-        title?: { contains: string; mode: 'insensitive' }
-        description?: { contains: string; mode: 'insensitive' }
+        title?: { contains: string }
+        description?: { contains: string }
       }>
     } = {}
     
     if (category) where.category = category
     if (difficulty) where.difficulty = difficulty
+    
+    // For SQLite, we'll handle search differently to make it case-insensitive
     if (search) {
+      // SQLite case-insensitive search using LIKE
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } }
+        { 
+          title: { 
+            contains: search,
+            // SQLite is case-insensitive by default for LIKE operations
+          } 
+        },
+        { 
+          description: { 
+            contains: search,
+          } 
+        }
       ]
     }
     

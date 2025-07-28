@@ -4,7 +4,7 @@ import { FeaturedRecipes } from "@/components/recipe/featured-recipes";
 import { PaginatedRecentRecipes } from "@/components/recipe/paginated-recent-recipes";
 import { Header } from "@/components/layout/header";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CategoriesGrid } from "@/components/recipe/categories-grid";
+import { FeaturedCategories } from "@/components/recipe/featured-categories";
 import { SearchSection } from "@/components/recipe/search-section";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -141,13 +141,32 @@ export default async function Home() {
         <section className="py-16 bg-gradient-to-br from-orange-50 to-yellow-50">
           <div className="container px-4 mx-auto">
             <div className="mb-12 text-center">
-              <h2 className="mb-4 text-3xl font-bold">Browse Categories</h2>
-              <p className="max-w-2xl mx-auto text-gray-600">
+              <h2 className="mb-4 text-3xl font-bold">Browse by Category</h2>
+              <p className="max-w-2xl mx-auto text-gray-600 mb-6">
                 Find recipes organized by dietary preferences, meal types, and
                 cooking styles
               </p>
+              <Link
+                href="/categories"
+                className="inline-flex items-center font-medium text-orange-600 hover:text-orange-700"
+              >
+                View all categories <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
             </div>
-            <CategoriesGrid />
+            <Suspense fallback={
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-lg border p-4 text-center animate-pulse">
+                    <div className="h-8 w-8 bg-gray-200 rounded mx-auto mb-2" />
+                    <div className="h-4 w-16 bg-gray-200 rounded mx-auto mb-1" />
+                    <div className="h-3 w-20 bg-gray-200 rounded mx-auto mb-2" />
+                    <div className="h-5 w-12 bg-gray-200 rounded mx-auto" />
+                  </div>
+                ))}
+              </div>
+            }>
+              <FeaturedCategories />
+            </Suspense>
           </div>
         </section>
 

@@ -1,8 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,10 +20,22 @@ import {
   LogOut,
   Heart,
   BookOpen,
+  Search,
+  X,
 } from "lucide-react"
 
 export function Header() {
   const { data: session } = useSession()
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/recipes?search=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery("")
+    }
+  }
 
   return (
     <header className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -31,8 +46,33 @@ export function Header() {
           <span className="text-xl font-bold">CookBook Connect</span>
         </Link>
 
+        {/* Search Bar - Hidden on mobile */}
+          {/* <div className="flex-1 hidden max-w-md mx-8 md:block">
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
+                <Input
+                  type="text"
+                  placeholder="Search recipes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 focus:border-orange-500 focus:ring-orange-500"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </form>
+          </div> */}
+
         {/* Nav links */}
-        <nav className="items-center hidden space-x-6 md:flex">
+        <nav className="items-center hidden space-x-6 lg:flex">
           <Link href="/recipes" className="text-sm font-medium hover:text-orange-500">
             Recipes
           </Link>
@@ -43,6 +83,16 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center space-x-4">
+          {/* Mobile Search Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden"
+            onClick={() => router.push("/recipes")}
+          >
+            <Search className="w-4 h-4" />
+          </Button>
+
           {session ? (
             <>
               {/* Create Recipe button */}
