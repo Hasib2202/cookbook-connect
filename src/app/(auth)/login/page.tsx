@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -17,6 +17,22 @@ import toast from "react-hot-toast"
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Check for verification success and errors
+  useEffect(() => {
+    const verified = searchParams.get('verified')
+    const error = searchParams.get('error')
+    const message = searchParams.get('message')
+    
+    if (verified === 'true') {
+      toast.success("Email verified successfully! You can now log in.")
+    } else if (error) {
+      toast.error(decodeURIComponent(error))
+    } else if (message) {
+      toast.success(decodeURIComponent(message))
+    }
+  }, [searchParams])
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -37,13 +53,17 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        toast.error("Invalid credentials")
+        if (result.error === "Please verify your email before signing in.") {
+          toast.error("Please verify your email before signing in. Check your inbox for the verification link.")
+        } else {
+          toast.error("Invalid credentials")
+        }
       } else {
         toast.success("Welcome back!")
         router.push("/")
         router.refresh()
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong")
     } finally {
       setIsLoading(false)
@@ -101,7 +121,7 @@ export default function LoginPage() {
           </Form>
           
           <div className="mt-6 text-center text-sm">
-            <span className="text-gray-600">Don't have an account? </span>
+            <span className="text-gray-600">Don&apos;t have an account? </span>
             <Link href="/register" className="text-orange-500 hover:underline">
               Sign up
             </Link>

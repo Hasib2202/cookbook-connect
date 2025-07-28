@@ -1,20 +1,12 @@
+// OPTION A: Current setup (JWT + Credentials + Email Verification)
+// This is what you currently have and it's CORRECT
+
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "./prisma"
 
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string
-      name?: string | null
-      email?: string | null
-      image?: string | null
-    }
-  }
-}
-
-export const authOptions: NextAuthOptions = {
+export const authOptionsJWT: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -56,7 +48,7 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   session: {
-    strategy: "jwt",
+    strategy: "jwt", // Required for credentials
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
@@ -65,16 +57,43 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      // Initial sign in
       if (user) {
         token.id = user.id
       }
       return token
     },
     async session({ session, token }) {
-      // Send properties to the client
       if (token && session.user) {
         session.user.id = token.id as string
+      }
+      return session
+    }
+  }
+}
+
+// OPTION B: Database + OAuth (No Credentials Provider)
+// Use this if you want database sessions
+
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import GoogleProvider from "next-auth/providers/google"
+
+export const authOptionsDatabase: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    })
+    // Cannot use CredentialsProvider with database strategy
+  ],
+  session: {
+    strategy: "database", // Works with OAuth providers
+    maxAge: 30 * 24 * 60 * 60,
+  },
+  callbacks: {
+    async session({ session, user }) {
+      if (user && session.user) {
+        session.user.id = user.id
       }
       return session
     }
