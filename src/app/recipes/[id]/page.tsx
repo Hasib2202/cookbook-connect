@@ -42,7 +42,7 @@ async function getUserFavorite(recipeId: string, userId?: string) {
   })
 }
 
-export default async function RecipePage({ params }: { params: { id: string } }) {
+export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const session = await getServerSession(authOptions)
   const recipe = await getRecipe(id)

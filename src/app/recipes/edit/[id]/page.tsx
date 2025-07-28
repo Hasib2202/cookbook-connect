@@ -29,7 +29,7 @@ async function getRecipe(id: string) {
   return recipe
 }
 
-export default async function EditRecipePage({ params }: { params: { id: string } }) {
+export default async function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const session = await getServerSession(authOptions)
   
