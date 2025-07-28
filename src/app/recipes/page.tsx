@@ -10,11 +10,11 @@ interface SearchParams {
   page?: string
 }
 
-interface RecipesPageProps {
-  searchParams: Promise<SearchParams>
-}
-
-export default async function RecipesPage({ searchParams }: RecipesPageProps) {
+export default async function RecipesPage({ 
+  searchParams 
+}: { 
+  searchParams: Promise<SearchParams> 
+}) {
   const resolvedSearchParams = await searchParams
   return (
     <div className="min-h-screen bg-gray-50">
