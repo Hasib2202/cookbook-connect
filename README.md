@@ -255,5 +255,6 @@ If you have any questions or need help with setup, please:
 **Built with ❤️ by Hasib Mostofa**
 
 *Happy Cooking! 🍳*
-#   F o r c e   d e p l o y m e n t   0 7 / 2 9 / 2 0 2 5   0 0 : 4 0 : 5 3  
+#   F o r c e   d e p l o y m e n t   0 7 / 2 9 / 2 0 2 5   0 0 : 4 0 : 5 3 
+ 
  
