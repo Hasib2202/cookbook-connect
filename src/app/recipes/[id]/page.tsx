@@ -43,6 +43,7 @@ async function getUserFavorite(recipeId: string, userId?: string) {
 }
 
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
+  // Next.js 15 compatibility fix - params is now a Promise
   const { id } = await params
   const session = await getServerSession(authOptions)
   const recipe = await getRecipe(id)
