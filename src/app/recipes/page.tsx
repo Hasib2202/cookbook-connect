@@ -11,21 +11,22 @@ interface SearchParams {
 }
 
 interface RecipesPageProps {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }
 
-export default function RecipesPage({ searchParams }: RecipesPageProps) {
+export default async function RecipesPage({ searchParams }: RecipesPageProps) {
+  const resolvedSearchParams = await searchParams
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container px-4 py-8 mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">All Recipes</h1>
+          <h1 className="mb-2 text-3xl font-bold">All Recipes</h1>
           <p className="text-gray-600">Discover amazing recipes from our community</p>
         </div>
         
         <Suspense fallback={<RecipeSearchSkeleton />}>
-          <RecipeSearchAndList searchParams={searchParams} />
+          <RecipeSearchAndList searchParams={resolvedSearchParams} />
         </Suspense>
       </main>
       <Footer />
@@ -37,8 +38,8 @@ function RecipeSearchSkeleton() {
   return (
     <div className="space-y-8">
       {/* Search filters skeleton */}
-      <div className="bg-white rounded-lg border p-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="p-6 space-y-4 bg-white border rounded-lg">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <div className="h-10 bg-gray-200 rounded animate-pulse" />
           <div className="h-10 bg-gray-200 rounded animate-pulse" />
           <div className="h-10 bg-gray-200 rounded animate-pulse" />
@@ -47,14 +48,14 @@ function RecipeSearchSkeleton() {
       </div>
       
       {/* Results skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-lg border overflow-hidden animate-pulse">
+          <div key={i} className="overflow-hidden bg-white border rounded-lg animate-pulse">
             <div className="h-48 bg-gray-200" />
             <div className="p-4 space-y-2">
-              <div className="h-5 bg-gray-200 rounded w-3/4" />
-              <div className="h-4 bg-gray-200 rounded w-full" />
-              <div className="h-4 bg-gray-200 rounded w-1/2" />
+              <div className="w-3/4 h-5 bg-gray-200 rounded" />
+              <div className="w-full h-4 bg-gray-200 rounded" />
+              <div className="w-1/2 h-4 bg-gray-200 rounded" />
             </div>
           </div>
         ))}
