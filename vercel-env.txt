@@ -1,0 +1,8 @@
+DATABASE_URL=postgresql://your-db-connection-string-here
+NEXTAUTH_URL=https://cookbook-connect-n0eevh5ez-hasib2202s-projects.vercel.app
+NEXTAUTH_SECRET=your-super-secret-key-for-nextauth-make-it-very-long-and-secure-at-least-32-characters
+CLOUDINARY_CLOUD_NAME=dksekryws
+CLOUDINARY_API_KEY=924184812939654
+CLOUDINARY_API_SECRET=NLU8zzcsKFcRQciWa2mChFlPyB8
+EMAIL_USER=imation337@gmail.com
+EMAIL_PASS=azxjknpqbfawrjct
