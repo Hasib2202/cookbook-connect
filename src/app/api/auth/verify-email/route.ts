@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         where: { identifier: email }
       })
       console.log("All tokens for email:", allTokensForEmail.length)
-      
+
       return NextResponse.json(
         { error: "Invalid or expired verification token" },
         { status: 400 }
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
           }
         }
       })
-      
+
       return NextResponse.json(
         { error: "Verification token has expired" },
         { status: 400 }
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     // Redirect to success page
     return NextResponse.redirect(new URL("/login?verified=true", request.url))
-    
+
   } catch (error) {
     console.error("Email verification error:", error)
     return NextResponse.json(

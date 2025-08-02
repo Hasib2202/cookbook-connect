@@ -1,78 +1,80 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface User {
-  id: string
-  name: string | null
-  email: string
-  emailVerified: string | null
-  createdAt: string
+  id: string;
+  name: string | null;
+  email: string;
+  emailVerified: string | null;
+  createdAt: string;
 }
 
 interface VerificationToken {
-  identifier: string
-  token: string
-  expires: string
-  isExpired: boolean
+  identifier: string;
+  token: string;
+  expires: string;
+  isExpired: boolean;
 }
 
 interface DatabaseData {
   counts: {
-    totalUsers: number
-    totalRecipes: number
-    totalSessions: number
-    totalVerificationTokens: number
-  }
-  recentUsers: User[]
-  verificationTokens: VerificationToken[]
-  message: string
+    totalUsers: number;
+    totalRecipes: number;
+    totalSessions: number;
+    totalVerificationTokens: number;
+  };
+  recentUsers: User[];
+  verificationTokens: VerificationToken[];
+  message: string;
 }
 
 export default function AdminPage() {
-  const [data, setData] = useState<DatabaseData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [data, setData] = useState<DatabaseData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const fetchData = async () => {
     try {
-      setLoading(true)
-      const response = await fetch('/api/debug/database')
+      setLoading(true);
+      const response = await fetch("/api/debug/database");
       if (!response.ok) {
-        throw new Error('Failed to fetch database data')
+        throw new Error("Failed to fetch database data");
       }
-      const result = await response.json()
-      setData(result)
-      setError('')
+      const result = await response.json();
+      setData(result);
+      setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   if (loading) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center">Loading database information...</div>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-red-500">Error: {error}</div>
-        <Button onClick={fetchData} className="mt-4">Retry</Button>
+        <Button onClick={fetchData} className="mt-4">
+          Retry
+        </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -89,7 +91,9 @@ export default function AdminPage() {
             <CardTitle>Total Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.counts.totalUsers || 0}</div>
+            <div className="text-2xl font-bold">
+              {data?.counts.totalUsers || 0}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -97,7 +101,9 @@ export default function AdminPage() {
             <CardTitle>Total Recipes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.counts.totalRecipes || 0}</div>
+            <div className="text-2xl font-bold">
+              {data?.counts.totalRecipes || 0}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -105,7 +111,9 @@ export default function AdminPage() {
             <CardTitle>Active Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.counts.totalSessions || 0}</div>
+            <div className="text-2xl font-bold">
+              {data?.counts.totalSessions || 0}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -113,7 +121,9 @@ export default function AdminPage() {
             <CardTitle>Verification Tokens</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.counts.totalVerificationTokens || 0}</div>
+            <div className="text-2xl font-bold">
+              {data?.counts.totalVerificationTokens || 0}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -130,7 +140,9 @@ export default function AdminPage() {
                 <div key={user.id} className="border rounded p-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold">{user.name || 'No name'}</h3>
+                      <h3 className="font-semibold">
+                        {user.name || "No name"}
+                      </h3>
                       <p className="text-sm text-gray-600">{user.email}</p>
                       <p className="text-xs text-gray-500">
                         Created: {new Date(user.createdAt).toLocaleString()}
@@ -171,7 +183,9 @@ export default function AdminPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-semibold">{token.identifier}</p>
-                      <p className="text-sm text-gray-600 font-mono">{token.token}</p>
+                      <p className="text-sm text-gray-600 font-mono">
+                        {token.token}
+                      </p>
                       <p className="text-xs text-gray-500">
                         Expires: {new Date(token.expires).toLocaleString()}
                       </p>
@@ -203,5 +217,5 @@ export default function AdminPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
