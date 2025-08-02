@@ -2,26 +2,26 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-  try {
-    // Get all users
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        emailVerified: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    try {
+        // Get all users
+        const users = await prisma.user.findMany({
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                emailVerified: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+            orderBy: { createdAt: 'desc' }
+        })
 
-    // Get verification tokens
-    const tokens = await prisma.verificationToken.findMany({
-      orderBy: { expires: 'desc' }
-    })
+        // Get verification tokens
+        const tokens = await prisma.verificationToken.findMany({
+            orderBy: { expires: 'desc' }
+        })
 
-    const html = `
+        const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -88,9 +88,9 @@ export async function GET() {
                 <h2>🔑 Verification Tokens (${tokens.length})</h2>
                 ${tokens.length === 0 ? '<p>No verification tokens found.</p>' : ''}
                 ${tokens.map(token => {
-                    const isExpired = new Date() > token.expires;
-                    const timeLeft = isExpired ? 'EXPIRED' : Math.floor((token.expires.getTime() - new Date().getTime()) / (1000 * 60)) + ' minutes left';
-                    return `
+            const isExpired = new Date() > token.expires;
+            const timeLeft = isExpired ? 'EXPIRED' : Math.floor((token.expires.getTime() - new Date().getTime()) / (1000 * 60)) + ' minutes left';
+            return `
                     <div class="card ${isExpired ? 'expired' : ''}">
                         <h3>${token.identifier} ${isExpired ? '⏰ EXPIRED' : '⏳ VALID'}</h3>
                         <p><strong>Token:</strong> ${token.token.substring(0, 16)}...${token.token.substring(token.token.length - 8)}</p>
@@ -98,7 +98,7 @@ export async function GET() {
                         <p><strong>Status:</strong> ${timeLeft}</p>
                     </div>
                 `;
-                }).join('')}
+        }).join('')}
             </div>
 
             <div class="section">
@@ -119,12 +119,12 @@ export async function GET() {
     </html>
     `;
 
-    return new NextResponse(html, {
-      headers: { 'Content-Type': 'text/html' }
-    })
-  } catch (error) {
-    console.error("Database viewer error:", error)
-    return new NextResponse(`
+        return new NextResponse(html, {
+            headers: { 'Content-Type': 'text/html' }
+        })
+    } catch (error) {
+        console.error("Database viewer error:", error)
+        return new NextResponse(`
       <html>
         <body style="font-family: Arial; padding: 20px;">
           <h1>Database Viewer Error</h1>
@@ -133,8 +133,8 @@ export async function GET() {
         </body>
       </html>
     `, {
-      status: 500,
-      headers: { 'Content-Type': 'text/html' }
-    })
-  }
+            status: 500,
+            headers: { 'Content-Type': 'text/html' }
+        })
+    }
 }

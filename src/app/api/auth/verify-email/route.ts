@@ -68,17 +68,17 @@ export async function GET(request: NextRequest) {
 
     console.log("User email verified successfully:", email)
 
-    // Delete the verification token
-    await prisma.verificationToken.delete({
-      where: {
-        identifier_token: {
-          identifier: email,
-          token: token
-        }
-      }
-    })
+    // TODO: Delete the verification token (temporarily disabled due to PostgreSQL replica identity issue)
+    // await prisma.verificationToken.delete({
+    //   where: {
+    //     identifier_token: {
+    //       identifier: email,
+    //       token: token
+    //     }
+    //   }
+    // })
 
-    console.log("Verification token deleted")
+    console.log("Verification token left in database (delete disabled due to PostgreSQL replica identity)")
 
     // Redirect to success page
     return NextResponse.redirect(new URL("/login?verified=true", request.url))
