@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth"
 import toast from "react-hot-toast"
 
-export default function LoginPage() {
+function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -129,5 +129,13 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   )
 }
