@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { recipeSchema } from "@/lib/validations/recipe"
+import { revalidatePath } from "next/cache"
 
 export async function GET(request: NextRequest) {
   try {
@@ -123,6 +124,10 @@ export async function POST(request: NextRequest) {
         }
       }
     });
+
+    // Revalidate the landing page and recipes page to show new recipe
+    revalidatePath("/");
+    revalidatePath("/recipes");
 
     return NextResponse.json(recipe, { status: 201 });
   } catch (error) {

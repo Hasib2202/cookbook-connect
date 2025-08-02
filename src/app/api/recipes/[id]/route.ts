@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { revalidatePath } from "next/cache"
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -80,6 +81,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     })
 
+    // Revalidate the landing page and recipes page to show updated recipe
+    revalidatePath("/");
+    revalidatePath("/recipes");
+    revalidatePath(`/recipes/${id}`);
+
     return NextResponse.json(updatedRecipe)
   } catch (error) {
     console.error('Failed to update recipe:', error)
@@ -109,6 +115,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     await prisma.recipe.delete({
       where: { id }
     })
+
+    // Revalidate the landing page and recipes page to remove deleted recipe
+    revalidatePath("/");
+    revalidatePath("/recipes");
 
     return NextResponse.json({ message: "Recipe deleted successfully" })
   } catch (error) {

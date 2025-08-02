@@ -36,6 +36,9 @@ async function getRecentRecipes() {
   });
 }
 
+// Add revalidation configuration to ensure fresh data
+export const revalidate = 0; // Disable caching for this page
+
 export default async function Home() {
   const [featuredRecipes, recentRecipes] = await Promise.all([
     getFeaturedRecipes(),
