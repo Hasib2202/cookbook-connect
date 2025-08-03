@@ -68,8 +68,13 @@ export default async function Home() {
                   and discover new culinary adventures.
                 </p>
                 <div className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
-                  <Button asChild className="px-8 py-6 text-lg text-white bg-orange-500 hover:bg-orange-600">
-                    <Link href="/recipes/new" className="">Share Your Recipe</Link>
+                  <Button
+                    asChild
+                    className="px-8 py-6 text-lg text-white bg-orange-500 hover:bg-orange-600"
+                  >
+                    <Link href="/recipes/new" className="">
+                      Share Your Recipe
+                    </Link>
                   </Button>
                   <Button
                     asChild
@@ -127,13 +132,15 @@ export default async function Home() {
             {/* Add significant padding to ensure arrows don't overlap with cards */}
             <div className="px-16 md:px-20">
               <Suspense fallback={<FeaturedRecipesSkeleton />}>
-                <FeaturedRecipes recipes={featuredRecipes.map(recipe => ({
-                  ...recipe,
-                  images: JSON.parse(recipe.images || '[]'),
-                  difficulty: recipe.difficulty as "Easy" | "Medium" | "Hard",
-                  createdAt: recipe.createdAt.toISOString(),
-                  updatedAt: recipe.updatedAt.toISOString()
-                }))} />
+                <FeaturedRecipes
+                  recipes={featuredRecipes.map((recipe) => ({
+                    ...recipe,
+                    images: JSON.parse(recipe.images || "[]"),
+                    difficulty: recipe.difficulty as "Easy" | "Medium" | "Hard",
+                    createdAt: recipe.createdAt.toISOString(),
+                    updatedAt: recipe.updatedAt.toISOString(),
+                  }))}
+                />
               </Suspense>
             </div>
           </div>
@@ -155,18 +162,23 @@ export default async function Home() {
                 View all categories <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </div>
-            <Suspense fallback={
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="p-4 text-center bg-white border rounded-lg animate-pulse">
-                    <div className="w-8 h-8 mx-auto mb-2 bg-gray-200 rounded" />
-                    <div className="w-16 h-4 mx-auto mb-1 bg-gray-200 rounded" />
-                    <div className="w-20 h-3 mx-auto mb-2 bg-gray-200 rounded" />
-                    <div className="w-12 h-5 mx-auto bg-gray-200 rounded" />
-                  </div>
-                ))}
-              </div>
-            }>
+            <Suspense
+              fallback={
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="p-4 text-center bg-white border rounded-lg animate-pulse"
+                    >
+                      <div className="w-8 h-8 mx-auto mb-2 bg-gray-200 rounded" />
+                      <div className="w-16 h-4 mx-auto mb-1 bg-gray-200 rounded" />
+                      <div className="w-20 h-3 mx-auto mb-2 bg-gray-200 rounded" />
+                      <div className="w-12 h-5 mx-auto bg-gray-200 rounded" />
+                    </div>
+                  ))}
+                </div>
+              }
+            >
               <FeaturedCategories />
             </Suspense>
           </div>
@@ -185,13 +197,13 @@ export default async function Home() {
               </Link>
             </div>
             <Suspense fallback={<RecentRecipesSkeleton />}>
-              <PaginatedRecentRecipes 
-                initialRecipes={recentRecipes.map(recipe => ({
+              <PaginatedRecentRecipes
+                initialRecipes={recentRecipes.map((recipe) => ({
                   ...recipe,
-                  images: JSON.parse(recipe.images || '[]'),
+                  images: JSON.parse(recipe.images || "[]"),
                   difficulty: recipe.difficulty as "Easy" | "Medium" | "Hard",
                   createdAt: recipe.createdAt.toISOString(),
-                  updatedAt: recipe.updatedAt.toISOString()
+                  updatedAt: recipe.updatedAt.toISOString(),
                 }))}
                 recipesPerPage={6}
               />
@@ -250,7 +262,10 @@ function RecentRecipesSkeleton() {
     <div className="space-y-8">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="overflow-hidden border rounded-xl animate-pulse">
+          <div
+            key={i}
+            className="overflow-hidden border rounded-xl animate-pulse"
+          >
             <div className="w-full h-40 bg-gray-200 rounded-b-none" />
             <div className="p-4 space-y-2">
               <div className="w-4/5 h-5 bg-gray-200 rounded" />

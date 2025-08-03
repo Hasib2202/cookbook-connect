@@ -62,7 +62,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json()
-    
+
     // Prepare data for database - stringify arrays
     const updateData = {
       ...body,
@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       instructions: typeof body.instructions === 'object' ? JSON.stringify(body.instructions) : body.instructions,
       images: typeof body.images === 'object' ? JSON.stringify(body.images) : body.images
     }
-    
+
     const updatedRecipe = await prisma.recipe.update({
       where: { id },
       data: updateData,

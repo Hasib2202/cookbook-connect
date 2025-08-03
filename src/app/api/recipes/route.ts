@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get("difficulty")
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "12")
-    
+
     // Build where clause
     const where: {
       category?: string
@@ -23,37 +23,37 @@ export async function GET(request: NextRequest) {
         description?: { contains: string }
       }>
     } = {}
-    
+
     if (category) where.category = category
     if (difficulty) where.difficulty = difficulty
-    
+
     // For SQLite, we'll handle search differently to make it case-insensitive
     if (search) {
       // SQLite case-insensitive search using LIKE
       where.OR = [
-        { 
-          title: { 
+        {
+          title: {
             contains: search,
             // SQLite is case-insensitive by default for LIKE operations
-          } 
+          }
         },
-        { 
-          description: { 
+        {
+          description: {
             contains: search,
-          } 
+          }
         }
       ]
     }
-    
+
     // Calculate skip for pagination
     const skip = (page - 1) * limit
-    
+
     // Sort by most recent
     const orderBy = { createdAt: 'desc' as const }
-    
+
     // Get total count for pagination
     const total = await prisma.recipe.count({ where })
-    
+
     const recipes = await prisma.recipe.findMany({
       where,
       include: {
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       skip,
       take: limit
     })
-    
+
     // Transform the recipes to match expected format
     const transformedRecipes = recipes.map(recipe => ({
       ...recipe,
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       instructions: JSON.parse(recipe.instructions || '[]'),
       difficulty: recipe.difficulty as "Easy" | "Medium" | "Hard"
     }))
-    
+
     return NextResponse.json({
       recipes: transformedRecipes,
       pagination: {
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // The recipeSchema will validate and transform arrays to JSON strings
     const data = recipeSchema.parse(body);
 
