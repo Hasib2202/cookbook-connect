@@ -1,4 +1,4 @@
-﻿# 🍳 CookBook Connect :) published :)
+﻿# 🍳 CookBook Connect :) published :) :)
 
 A modern, full-featured recipe sharing platform built with Next.js 15, where food enthusiasts can discover, create, and share their favorite recipes with a vibrant community of home cooks and professional chefs.
 
